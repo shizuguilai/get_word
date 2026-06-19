@@ -18,6 +18,20 @@ http://127.0.0.1:4173
 
 桌面本机测试可以直接使用这个地址。手机真机使用麦克风时，建议部署到 HTTPS 静态站点后打开，再用浏览器菜单添加到主屏幕；普通局域网 `http://电脑IP:4173` 可能会被手机浏览器拦截麦克风权限。
 
+## 手机访问
+
+GitHub Pages 地址：
+
+```text
+https://shizuguilai.github.io/get_word/
+```
+
+如果 GitHub Pages 在手机网络上还显示 404，可以先用 jsDelivr 的 HTTPS 备用入口：
+
+```text
+https://cdn.jsdelivr.net/gh/shizuguilai/get_word@main/index.html
+```
+
 ## 语音识别说明
 
 当前版本使用手机浏览器或系统提供的中文语音识别能力，语言固定为 `zh-CN`。Chrome / Edge Android 通常可用；如果浏览器不支持 `SpeechRecognition`，应用会提示更换浏览器。
