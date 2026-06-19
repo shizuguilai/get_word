@@ -1,4 +1,4 @@
-const CACHE_NAME = "zh-prompter-v3";
+const CACHE_NAME = "zh-prompter-v4";
 const APP_SHELL = [
   "./",
   "./index.html",

@@ -42,6 +42,7 @@ let transcriptBuffer = "";
 let wakeLock = null;
 let restartTimer = 0;
 let toastTimer = 0;
+let lastRecognitionToastAt = 0;
 
 init();
 
@@ -243,14 +244,7 @@ function buildRecognition() {
     }
   };
 
-  instance.onerror = (event) => {
-    if (event.error === "not-allowed" || event.error === "service-not-allowed") {
-      showToast("需要允许麦克风权限才能跟读");
-      stopListening();
-      return;
-    }
-    showToast("识别有点卡，正在尝试继续");
-  };
+  instance.onerror = handleRecognitionError;
 
   instance.onend = () => {
     if (!listening) return;
@@ -265,6 +259,51 @@ function buildRecognition() {
   };
 
   return instance;
+}
+
+function handleRecognitionError(event) {
+  const error = event?.error || "";
+
+  if (error === "no-speech") {
+    dom.liveTranscript.textContent = "正在听中文...";
+    return;
+  }
+
+  if (error === "aborted") {
+    return;
+  }
+
+  if (error === "not-allowed" || error === "service-not-allowed") {
+    showToast("需要允许麦克风权限才能跟读");
+    stopListening();
+    return;
+  }
+
+  if (error === "audio-capture") {
+    showToast("没有检测到麦克风，请检查权限或耳机");
+    stopListening();
+    return;
+  }
+
+  if (error === "language-not-supported") {
+    showToast("当前浏览器不支持中文语音识别");
+    stopListening();
+    return;
+  }
+
+  if (error === "network") {
+    showRecognitionToast("语音识别网络不稳，会自动重连");
+    return;
+  }
+
+  showRecognitionToast("语音识别短暂中断，正在继续");
+}
+
+function showRecognitionToast(message) {
+  const now = Date.now();
+  if (now - lastRecognitionToastAt < 9000) return;
+  lastRecognitionToastAt = now;
+  showToast(message);
 }
 
 function advanceBySpeech(text, isFinal) {
