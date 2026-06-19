@@ -30,31 +30,6 @@
 如果识别不准，可以放慢语速，或者轻点下一句进行手动校准。</textarea>
         </label>
 
-        <details class="settings-panel" id="settingsPanel" open>
-          <summary class="settings-summary">
-            <span>提词设置</span>
-            <small>字体、行距、常亮、镜像</small>
-          </summary>
-          <div class="setup-grid">
-            <label class="field">
-              <span>字体大小</span>
-              <input id="fontSize" type="range" min="26" max="54" value="36" />
-            </label>
-            <label class="field">
-              <span>行距</span>
-              <input id="lineHeight" type="range" min="120" max="190" value="150" />
-            </label>
-            <label class="switch">
-              <input id="keepAwake" type="checkbox" checked />
-              <span>朗读时保持屏幕常亮</span>
-            </label>
-            <label class="switch">
-              <input id="mirrorMode" type="checkbox" />
-              <span>镜像提词</span>
-            </label>
-          </div>
-        </details>
-
         <div class="actions">
           <button class="primary-button" id="loadScript" type="button">
             <span aria-hidden="true">▶</span>
@@ -76,10 +51,34 @@
             <strong id="readProgress">0 / 0</strong>
             <span id="liveTranscript">等待开始朗读</span>
           </div>
+          <button class="icon-button" id="settingsToggle" type="button" aria-label="提词设置" title="提词设置" aria-expanded="false">
+            ⚙
+          </button>
           <button class="icon-button" id="toggleFullscreen" type="button" aria-label="全屏" title="全屏">
             ⛶
           </button>
         </header>
+
+        <div class="settings-panel prompter-settings is-collapsed" id="settingsPanel">
+          <div class="setup-grid">
+            <label class="field">
+              <span>字体大小</span>
+              <input id="fontSize" type="range" min="26" max="54" value="36" />
+            </label>
+            <label class="field">
+              <span>行距</span>
+              <input id="lineHeight" type="range" min="120" max="190" value="150" />
+            </label>
+            <label class="switch">
+              <input id="keepAwake" type="checkbox" checked />
+              <span>朗读时保持屏幕常亮</span>
+            </label>
+            <label class="switch">
+              <input id="mirrorMode" type="checkbox" />
+              <span>镜像提词</span>
+            </label>
+          </div>
+        </div>
 
         <div class="cue-window" id="cueWindow">
           <ol class="cue-list" id="cueList"></ol>

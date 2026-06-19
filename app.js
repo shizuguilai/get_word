@@ -14,6 +14,7 @@ const dom = {
   sampleScript: document.querySelector("#sampleScript"),
   loadScript: document.querySelector("#loadScript"),
   settingsPanel: document.querySelector("#settingsPanel"),
+  settingsToggle: document.querySelector("#settingsToggle"),
   engineStatus: document.querySelector("#engineStatus"),
   fontSize: document.querySelector("#fontSize"),
   lineHeight: document.querySelector("#lineHeight"),
@@ -41,13 +42,11 @@ let transcriptBuffer = "";
 let wakeLock = null;
 let restartTimer = 0;
 let toastTimer = 0;
-const compactSettingsQuery = window.matchMedia("(max-width: 560px)");
 
 init();
 
 function init() {
   restoreDraft();
-  syncSettingsPanel();
   bindEvents();
   updateEngineStatus();
   applyTypography();
@@ -66,22 +65,28 @@ function bindEvents() {
   dom.listenToggle.addEventListener("click", toggleListening);
   dom.prevCue.addEventListener("click", () => moveCue(currentIndex - 1, true));
   dom.nextCue.addEventListener("click", () => moveCue(currentIndex + 1, true));
-  dom.fontSize.addEventListener("input", applyTypography);
-  dom.lineHeight.addEventListener("input", applyTypography);
+  dom.fontSize.addEventListener("input", () => {
+    applyTypography();
+    requestAnimationFrame(() => scrollToCurrent(false));
+  });
+  dom.lineHeight.addEventListener("input", () => {
+    applyTypography();
+    requestAnimationFrame(() => scrollToCurrent(false));
+  });
+  dom.settingsToggle.addEventListener("click", toggleSettingsPanel);
   dom.mirrorMode.addEventListener("change", () => {
     dom.prompterPanel.classList.toggle("mirror", dom.mirrorMode.checked);
   });
   dom.toggleFullscreen.addEventListener("click", toggleFullscreen);
-  if (compactSettingsQuery.addEventListener) {
-    compactSettingsQuery.addEventListener("change", syncSettingsPanel);
-  } else {
-    compactSettingsQuery.addListener(syncSettingsPanel);
-  }
 }
 
-function syncSettingsPanel() {
-  if (!dom.settingsPanel) return;
-  dom.settingsPanel.open = !compactSettingsQuery.matches;
+function toggleSettingsPanel() {
+  const collapsed = dom.settingsPanel.classList.toggle("is-collapsed");
+  dom.settingsToggle.setAttribute("aria-expanded", String(!collapsed));
+  if (!collapsed) {
+    requestAnimationFrame(() => scrollToCurrent(false));
+    window.setTimeout(() => scrollToCurrent(false), 180);
+  }
 }
 
 function restoreDraft() {
@@ -124,6 +129,8 @@ function enterPrompter() {
   updateProgress();
   dom.setupPanel.classList.add("is-hidden");
   dom.prompterPanel.classList.remove("is-hidden");
+  dom.settingsPanel.classList.add("is-collapsed");
+  dom.settingsToggle.setAttribute("aria-expanded", "false");
   dom.prompterPanel.classList.toggle("mirror", dom.mirrorMode.checked);
   requestAnimationFrame(() => scrollToCurrent(false));
 }
@@ -266,18 +273,24 @@ function advanceBySpeech(text, isFinal) {
 
   const searchText = trimBuffer(transcriptBuffer + normalized);
   const match = findBestSegment(searchText, currentIndex);
-  if (match.index !== currentIndex && match.score >= 0.48) {
+  const currentMatch = scoreSegment(searchText, scriptSegments[currentIndex]?.normalized || "");
+  if (
+    match.index !== currentIndex &&
+    match.score >= 0.58 &&
+    match.score - currentMatch.score >= 0.08
+  ) {
     moveCue(match.index, false);
   }
 
   const current = scriptSegments[currentIndex];
   if (!current) return;
 
-  const currentScore = similarity(searchText, current.normalized);
+  const currentScore = scoreSegment(searchText, current.normalized);
   const shouldAdvance =
     isFinal &&
-    (currentScore >= 0.7 ||
-      searchText.includes(current.normalized.slice(0, Math.min(8, current.normalized.length))));
+    ((currentScore.score >= 0.74 && currentScore.targetCoverage >= 0.5) ||
+      (currentScore.targetCoverage >= 0.58 && currentScore.heardCoverage >= 0.72) ||
+      (currentScore.tailProgress >= 0.74 && currentScore.score >= 0.58));
 
   if (shouldAdvance && currentIndex < scriptSegments.length - 1) {
     moveCue(currentIndex + 1, false);
@@ -290,27 +303,91 @@ function findBestSegment(text, fromIndex) {
   let best = { index: fromIndex, score: 0 };
 
   for (let index = start; index <= end; index += 1) {
-    const score = similarity(text, scriptSegments[index].normalized);
+    const score = scoreSegment(text, scriptSegments[index].normalized).score;
     if (score > best.score) best = { index, score };
   }
 
   return best;
 }
 
-function similarity(a, b) {
-  if (!a || !b) return 0;
-  if (a.includes(b) || b.includes(a)) {
-    return Math.min(a.length, b.length) / Math.max(a.length, b.length);
+function scoreSegment(heard, target) {
+  if (!heard || !target) {
+    return { score: 0, heardCoverage: 0, targetCoverage: 0, tailProgress: 0 };
   }
 
-  const aSet = new Set([...a]);
-  let overlap = 0;
-  for (const char of b) {
-    if (aSet.has(char)) overlap += 1;
+  if (heard.includes(target) || target.includes(heard)) {
+    const shortRatio = Math.min(heard.length, target.length) / Math.max(heard.length, target.length);
+    return {
+      score: Math.min(1, 0.62 + shortRatio * 0.38),
+      heardCoverage: 1,
+      targetCoverage: shortRatio,
+      tailProgress: target.includes(heard) ? shortRatio : 1,
+    };
   }
 
-  const ordered = longestCommonSubsequence(a, b);
-  return Math.max(overlap / b.length, ordered / Math.max(a.length, b.length));
+  const ordered = longestCommonSubsequence(heard, target);
+  const heardCoverage = ordered / heard.length;
+  const targetCoverage = ordered / target.length;
+  const chunkCoverage = ngramOverlap(heard, target, 2);
+  const contiguous = longestCommonSubstring(heard, target) / Math.min(heard.length, target.length);
+  const tailProgress = orderedTailProgress(heard, target);
+  const score =
+    heardCoverage * 0.34 +
+    targetCoverage * 0.3 +
+    chunkCoverage * 0.22 +
+    contiguous * 0.09 +
+    tailProgress * 0.05;
+
+  return {
+    score,
+    heardCoverage,
+    targetCoverage,
+    tailProgress,
+  };
+}
+
+function ngramOverlap(a, b, size) {
+  if (a.length < size || b.length < size) return 0;
+  const source = new Set();
+  for (let i = 0; i <= a.length - size; i += 1) {
+    source.add(a.slice(i, i + size));
+  }
+
+  let hits = 0;
+  let total = 0;
+  for (let i = 0; i <= b.length - size; i += 1) {
+    total += 1;
+    if (source.has(b.slice(i, i + size))) hits += 1;
+  }
+
+  return total ? hits / total : 0;
+}
+
+function longestCommonSubstring(a, b) {
+  let best = 0;
+  const previous = new Array(b.length + 1).fill(0);
+  const current = new Array(b.length + 1).fill(0);
+
+  for (let i = 1; i <= a.length; i += 1) {
+    for (let j = 1; j <= b.length; j += 1) {
+      current[j] = a[i - 1] === b[j - 1] ? previous[j - 1] + 1 : 0;
+      if (current[j] > best) best = current[j];
+    }
+    previous.splice(0, previous.length, ...current);
+    current.fill(0);
+  }
+
+  return best;
+}
+
+function orderedTailProgress(heard, target) {
+  let targetIndex = 0;
+  for (const char of heard) {
+    const next = target.indexOf(char, targetIndex);
+    if (next !== -1) targetIndex = next + 1;
+  }
+
+  return targetIndex / target.length;
 }
 
 function longestCommonSubsequence(a, b) {
@@ -354,10 +431,13 @@ function scrollToCurrent(smooth) {
   const current = dom.cueList.querySelector(".cue.is-current");
   if (!current) return;
 
-  const target =
-    current.offsetTop - dom.cueWindow.clientHeight * 0.36 + current.clientHeight / 2;
+  const cueRect = current.getBoundingClientRect();
+  const windowRect = dom.cueWindow.getBoundingClientRect();
+  const centeredOffset = Math.max(0, (windowRect.height - cueRect.height) / 2);
+  const delta = cueRect.top - windowRect.top - centeredOffset;
+
   dom.cueWindow.scrollTo({
-    top: Math.max(0, target),
+    top: Math.max(0, dom.cueWindow.scrollTop + delta),
     behavior: smooth ? "smooth" : "auto",
   });
 }

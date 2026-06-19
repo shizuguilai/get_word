@@ -58,7 +58,7 @@ button {
 
 .setup-panel {
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  grid-template-rows: auto minmax(0, 1fr) auto;
   gap: 14px;
   overflow: hidden;
 }
@@ -146,58 +146,6 @@ textarea:focus {
   overflow: hidden;
 }
 
-.settings-summary {
-  min-height: 50px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 0 12px;
-  cursor: pointer;
-  list-style: none;
-}
-
-.settings-summary::-webkit-details-marker {
-  display: none;
-}
-
-.settings-summary span {
-  color: var(--text);
-  font-size: 15px;
-  font-weight: 800;
-}
-
-.settings-summary small {
-  min-width: 0;
-  overflow: hidden;
-  color: var(--muted);
-  font-size: 12px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.settings-summary::after {
-  width: 28px;
-  height: 28px;
-  flex: 0 0 28px;
-  display: grid;
-  place-items: center;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.07);
-  color: var(--text);
-  content: "+";
-  font-weight: 800;
-}
-
-.settings-panel[open] .settings-summary {
-  margin-bottom: 2px;
-}
-
-.settings-panel[open] .settings-summary::after {
-  content: "-";
-}
-
 .field,
 .switch {
   min-height: 62px;
@@ -272,11 +220,22 @@ input[type="range"] {
 
 .prompter-panel {
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
   gap: 12px;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .is-hidden {
+  display: none;
+}
+
+.prompter-settings {
+  max-height: 224px;
+  overflow-y: auto;
+}
+
+.prompter-settings.is-collapsed {
   display: none;
 }
 
@@ -462,7 +421,7 @@ input[type="range"] {
 
   .setup-panel {
     gap: 10px;
-    grid-template-rows: auto minmax(0, 1fr) auto auto;
+    grid-template-rows: auto minmax(0, 1fr) auto;
   }
 
   h1 {
@@ -483,9 +442,13 @@ input[type="range"] {
   .setup-grid {
     grid-template-columns: 1fr;
     gap: 8px;
-    max-height: min(42dvh, 280px);
+    max-height: min(34dvh, 230px);
     overflow-y: auto;
     padding: 0 10px 10px;
+  }
+
+  .prompter-settings {
+    max-height: min(30dvh, 220px);
   }
 
   .status-pill {
