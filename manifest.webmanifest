@@ -1,0 +1,19 @@
+{
+  "name": "中文跟读提词器",
+  "short_name": "提词器",
+  "description": "只面向中文朗读的自动跟读提词器。",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#101319",
+  "theme_color": "#14181f",
+  "lang": "zh-CN",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "./assets/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

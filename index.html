@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#14181f" />
+    <title>中文跟读提词器</title>
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" href="./assets/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="./assets/icon.svg" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="setup-panel" id="setupPanel" aria-label="稿件设置">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">中文跟读提词器</p>
+            <h1>读到哪，稿子跟到哪</h1>
+          </div>
+          <div class="status-pill" id="engineStatus">中文识别待启动</div>
+        </header>
+
+        <label class="script-editor">
+          <span>提词稿</span>
+          <textarea id="scriptInput" spellcheck="false">大家好，欢迎来到今天的分享。
+这是一款中文跟读提词器。
+你只需要按下开始，然后照着稿子朗读。
+系统会识别你的中文语音，并自动移动到你读到的位置。
+如果识别不准，可以放慢语速，或者轻点下一句进行手动校准。</textarea>
+        </label>
+
+        <div class="setup-grid">
+          <label class="field">
+            <span>字体大小</span>
+            <input id="fontSize" type="range" min="26" max="54" value="36" />
+          </label>
+          <label class="field">
+            <span>行距</span>
+            <input id="lineHeight" type="range" min="120" max="190" value="150" />
+          </label>
+          <label class="switch">
+            <input id="keepAwake" type="checkbox" checked />
+            <span>朗读时保持屏幕常亮</span>
+          </label>
+          <label class="switch">
+            <input id="mirrorMode" type="checkbox" />
+            <span>镜像提词</span>
+          </label>
+        </div>
+
+        <div class="actions">
+          <button class="primary-button" id="loadScript" type="button">
+            <span aria-hidden="true">▶</span>
+            进入提词
+          </button>
+          <button class="ghost-button" id="sampleScript" type="button">
+            <span aria-hidden="true">✦</span>
+            恢复示例
+          </button>
+        </div>
+      </section>
+
+      <section class="prompter-panel is-hidden" id="prompterPanel" aria-label="提词器">
+        <header class="prompter-toolbar">
+          <button class="icon-button" id="backToEdit" type="button" aria-label="返回编辑" title="返回编辑">
+            ←
+          </button>
+          <div class="toolbar-center">
+            <strong id="readProgress">0 / 0</strong>
+            <span id="liveTranscript">等待开始朗读</span>
+          </div>
+          <button class="icon-button" id="toggleFullscreen" type="button" aria-label="全屏" title="全屏">
+            ⛶
+          </button>
+        </header>
+
+        <div class="cue-window" id="cueWindow">
+          <ol class="cue-list" id="cueList"></ol>
+        </div>
+
+        <footer class="control-dock">
+          <button class="round-button" id="prevCue" type="button" aria-label="上一句" title="上一句">‹</button>
+          <button class="listen-button" id="listenToggle" type="button">
+            <span id="listenIcon" aria-hidden="true">●</span>
+            <span id="listenText">开始跟读</span>
+          </button>
+          <button class="round-button" id="nextCue" type="button" aria-label="下一句" title="下一句">›</button>
+        </footer>
+      </section>
+    </main>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script src="./app.js" type="module"></script>
+  </body>
+</html>
