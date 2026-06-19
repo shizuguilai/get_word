@@ -57,9 +57,10 @@ button {
 }
 
 .setup-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  gap: 14px;
+  overflow: hidden;
 }
 
 .topbar {
@@ -135,6 +136,66 @@ textarea:focus {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
+  padding: 0 12px 12px;
+}
+
+.settings-panel {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.055);
+  overflow: hidden;
+}
+
+.settings-summary {
+  min-height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0 12px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.settings-summary::-webkit-details-marker {
+  display: none;
+}
+
+.settings-summary span {
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.settings-summary small {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.settings-summary::after {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--text);
+  content: "+";
+  font-weight: 800;
+}
+
+.settings-panel[open] .settings-summary {
+  margin-bottom: 2px;
+}
+
+.settings-panel[open] .settings-summary::after {
+  content: "-";
 }
 
 .field,
@@ -194,6 +255,7 @@ input[type="range"] {
   align-items: center;
   justify-content: center;
   gap: 8px;
+  white-space: nowrap;
 }
 
 .primary-button {
@@ -394,8 +456,36 @@ input[type="range"] {
 }
 
 @media (max-width: 430px) {
+  .app-shell {
+    padding: max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom));
+  }
+
+  .setup-panel {
+    gap: 10px;
+    grid-template-rows: auto minmax(0, 1fr) auto auto;
+  }
+
+  h1 {
+    font-size: 28px;
+  }
+
+  .script-editor {
+    gap: 6px;
+  }
+
+  textarea {
+    min-height: 0;
+    padding: 12px;
+    font-size: 17px;
+    line-height: 1.55;
+  }
+
   .setup-grid {
     grid-template-columns: 1fr;
+    gap: 8px;
+    max-height: min(42dvh, 280px);
+    overflow-y: auto;
+    padding: 0 10px 10px;
   }
 
   .status-pill {
@@ -403,7 +493,11 @@ input[type="range"] {
   }
 
   .actions {
-    flex-direction: column;
+    gap: 8px;
+  }
+
+  .ghost-button {
+    flex: 0 0 126px;
   }
 
   .cue-list {

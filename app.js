@@ -13,6 +13,7 @@ const dom = {
   scriptInput: document.querySelector("#scriptInput"),
   sampleScript: document.querySelector("#sampleScript"),
   loadScript: document.querySelector("#loadScript"),
+  settingsPanel: document.querySelector("#settingsPanel"),
   engineStatus: document.querySelector("#engineStatus"),
   fontSize: document.querySelector("#fontSize"),
   lineHeight: document.querySelector("#lineHeight"),
@@ -40,11 +41,13 @@ let transcriptBuffer = "";
 let wakeLock = null;
 let restartTimer = 0;
 let toastTimer = 0;
+const compactSettingsQuery = window.matchMedia("(max-width: 560px)");
 
 init();
 
 function init() {
   restoreDraft();
+  syncSettingsPanel();
   bindEvents();
   updateEngineStatus();
   applyTypography();
@@ -69,6 +72,16 @@ function bindEvents() {
     dom.prompterPanel.classList.toggle("mirror", dom.mirrorMode.checked);
   });
   dom.toggleFullscreen.addEventListener("click", toggleFullscreen);
+  if (compactSettingsQuery.addEventListener) {
+    compactSettingsQuery.addEventListener("change", syncSettingsPanel);
+  } else {
+    compactSettingsQuery.addListener(syncSettingsPanel);
+  }
+}
+
+function syncSettingsPanel() {
+  if (!dom.settingsPanel) return;
+  dom.settingsPanel.open = !compactSettingsQuery.matches;
 }
 
 function restoreDraft() {
